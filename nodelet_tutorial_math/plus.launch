@@ -1,16 +1,46 @@
 <launch>
+  <!--まず、managerを立ち上げます。 -->
   <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager" output="screen"/>
 
+  <!-- 引数で実行したいnodeltを与えます。
+  /Plusノードを立ち上げるためにnameを与えています。
+  立ち上げるプログラムの指定のために以下の書式で、プログラムを与えます。
+  nodelet load pkg/Type manager  - Launch a nodelet of type pkg/Type on manager manager
+  typeというのは、nodelet_math.xmlの中に書いてる、クラスの名前です。
+  今回でいうと、
+  PlusというTypeを、指定しstandalone_nodeletという名前のmanagerに登録しています。
+-->
   <node pkg="nodelet" type="nodelet" name="Plus" args="load nodelet_tutorial_math/Plus standalone_nodelet" output="screen">
+  <!-- /Plus nodeletは/Plus/outというtopicをpublishしていますが、remapped_outputという名前に変えています。(これは利用されていません)-->
     <remap from="/Plus/out" to="remapped_output"/>
   </node>		  
   
   <rosparam param="Plus2" file="$(find nodelet_tutorial_math)/plus_default.yaml"/>
+  <!-- 上と同様に/Plus2というノードを立ち上げます。
+  /Plus2はnodeletの機能を利用して、
+  /Plus2/in
+  /Plus2/out
+  というトピックのsub&pubをしています。
+-->
   <node pkg="nodelet" type="nodelet" name="Plus2" args="load nodelet_tutorial_math/Plus standalone_nodelet" output="screen">
     <rosparam file="$(find nodelet_tutorial_math)/plus_default.yaml"/>
   </node>
+  <!-- さらに上と同様に/Plus3というノードを立ち上げます。
+  /Plus3はnodeletの機能を利用して、
+  /Plus3/in
+  /Plus3/out
+  というトピックのsub&pubをしますが、subscribeするtopicは/Plus2/outにremapしています
+-->
   <node pkg="nodelet" type="nodelet" name="Plus3" args="standalone nodelet_tutorial_math/Plus" output="screen">
     <param name="value" type="double" value="2.5"/>
     <remap from="Plus3/in" to="Plus2/out"/>
   </node>
+  <!--
+  /plus2->/plus3というnodeletを介したtopicの流れがあるので、例えば、
+  $ rostopic pub /Plus2/in std_msgs/Float64 5.0 -r 10
+  を端末から実行すると、
+  $ rostopic echo /Plus2/out
+  $ rostopic echo /Plus3/out
+  に/plusされた結果が流れます。
+  -->
 </launch>
